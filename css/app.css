@@ -548,12 +548,192 @@ tr:hover td {
   transform: translateX(3px);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 680px) {
   .btn-arrow-detail .detail-text {
     display: none;
   }
   .btn-arrow-detail {
     padding: 6px 9px;
+  }
+  .table-responsive {
+    overflow-x: hidden !important;
+  }
+  
+  /* FUEL DATA TABLE TO RESPONSIVE ZERO-SCROLL CARDS */
+  .fuel-data-table {
+    display: block;
+    width: 100%;
+  }
+  .fuel-data-table thead {
+    display: none;
+  }
+  .fuel-data-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .fuel-data-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 
+      "meta cost"
+      "fuel economy";
+    gap: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 10px 32px 10px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    cursor: pointer;
+    align-items: center;
+  }
+  .fuel-data-table tr::after {
+    content: '➔';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #38BDF8;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+  .fuel-data-table tr td {
+    padding: 0;
+    border: none;
+  }
+  .fuel-data-table tr td:nth-child(1) { grid-area: meta; }
+  .fuel-data-table tr td:nth-child(2) { grid-area: fuel; }
+  .fuel-data-table tr td:nth-child(3) { grid-area: cost; text-align: right; }
+  .fuel-data-table tr td:nth-child(4) { grid-area: economy; text-align: right; }
+  .fuel-data-table tr td:nth-child(5) { display: none; }
+  .fuel-data-table tr td[colspan] {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+  }
+  .fuel-data-table tr:has(td[colspan])::after {
+    display: none;
+  }
+
+  /* SERVICE DATA TABLE TO RESPONSIVE ZERO-SCROLL CARDS */
+  .service-data-table {
+    display: block;
+    width: 100%;
+  }
+  .service-data-table thead {
+    display: none;
+  }
+  .service-data-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .service-data-table tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 
+      "date cost"
+      "desc desc";
+    gap: 6px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 10px 32px 10px 12px;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    cursor: pointer;
+    align-items: center;
+  }
+  .service-data-table tr::after {
+    content: '➔';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #38BDF8;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+  .service-data-table tr td {
+    padding: 0;
+    border: none;
+  }
+  .service-data-table tr td:nth-child(1) { grid-area: date; }
+  .service-data-table tr td:nth-child(2) { grid-area: desc; }
+  .service-data-table tr td:nth-child(3) { grid-area: cost; text-align: right; }
+  .service-data-table tr td:nth-child(4) { display: none; }
+  .service-data-table tr td[colspan] {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+  }
+  .service-data-table tr:has(td[colspan])::after {
+    display: none;
+  }
+
+  /* EXPENSE DATA TABLE TO RESPONSIVE ZERO-SCROLL CARDS */
+  .expense-data-table {
+    display: block;
+    width: 100%;
+  }
+  .expense-data-table thead {
+    display: none;
+  }
+  .expense-data-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  .expense-data-table tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .expense-data-table tr td {
+    padding: 0;
+    border: none;
+  }
+  .expense-data-table tr td[colspan] {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* MODAL BOX MOBILE ADJUSTMENTS */
+  .modal-overlay {
+    padding: 10px;
+  }
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: var(--radius-md) !important;
+  }
+  .top-header {
+    padding: 8px 10px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .app-container {
+    padding: 10px 8px;
+  }
+  .section-card {
+    padding: 12px 10px;
   }
 }
 

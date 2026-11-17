@@ -47,6 +47,26 @@ const App = (function() {
       }
     });
 
+    // Check and purge legacy dummy seed data (e.g. KCX 123A, 10 demo fuel entries)
+    try {
+      if (localStorage.getItem('purged_demo_v4') !== 'true') {
+        const existingVehicles = await AppDB.getAll('vehicles');
+        const hasLegacyDummy = existingVehicles.some(v => 
+          v.registrationNumber === 'KCX 123A' || 
+          v.registrationNumber === 'KDA 456B' || 
+          v.registrationNumber === 'KCB 789C' ||
+          (v.id && v.id.startsWith('veh-axio'))
+        );
+        if (hasLegacyDummy) {
+          console.log('[App] Purging old dummy demo data...');
+          await AppDB.clearAll();
+        }
+        localStorage.setItem('purged_demo_v4', 'true');
+      }
+    } catch (e) {
+      console.warn('[App] Purge error:', e);
+    }
+
     // Initialize DB & Seed if empty
     try {
       await AppDB.initSeedIfEmpty();
@@ -387,7 +407,7 @@ const App = (function() {
           </div>
         </div>
         <div class="table-responsive">
-          <table>
+          <table class="fuel-data-table">
             <thead>
               <tr>
                 <th style="width:28%;">Date & Station</th>
@@ -463,7 +483,7 @@ const App = (function() {
         </div>
 
         <div class="table-responsive">
-          <table>
+          <table class="fuel-data-table">
             <thead>
               <tr>
                 <th style="width:28%;">Date & Station</th>
@@ -606,7 +626,7 @@ const App = (function() {
         <!-- Service History Table -->
         <h4 style="font-size:13px; color:#38BDF8; margin-bottom:10px; text-transform:uppercase;">Service History Logs</h4>
         <div class="table-responsive">
-          <table>
+          <table class="service-data-table">
             <thead>
               <tr>
                 <th style="width:28%;">Date & Mileage</th>
@@ -743,7 +763,7 @@ const App = (function() {
         <!-- Expense Log Table -->
         <h4 style="font-size:13px; color:#38BDF8; margin-bottom:10px; text-transform:uppercase;">Recent Incidental Expenses</h4>
         <div class="table-responsive">
-          <table>
+          <table class="expense-data-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -1071,15 +1091,20 @@ const App = (function() {
       ` : ''}
 
       <!-- Action Buttons -->
-      <div style="display:flex; gap:8px; justify-content:flex-end;">
-        <button class="btn-secondary" onclick="App.downloadEntrySlip('${entry.id}')">
-          📥 Download Receipt Slip
-        </button>
-        <button class="btn-primary" onclick="App.openRefuelModal('${entry.id}')">
-          ✏️ Edit Entry
-        </button>
-        <button class="btn-secondary" style="color:#EF4444; border-color:#EF4444;" onclick="App.deleteFuelEntry('${entry.id}')">
-          🗑️ Delete
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-secondary" onclick="App.downloadEntrySlip('${entry.id}')" style="flex:1; justify-content:center;">
+            📥 Download Slip
+          </button>
+          <button class="btn-primary" onclick="App.openRefuelModal('${entry.id}')" style="flex:1; justify-content:center;">
+            ✏️ Edit Entry
+          </button>
+          <button class="btn-secondary" style="color:#EF4444; border-color:#EF4444;" onclick="App.deleteFuelEntry('${entry.id}')">
+            🗑️ Delete
+          </button>
+        </div>
+        <button type="button" class="btn-secondary" data-close-modal style="width:100%; justify-content:center; padding:12px; font-weight:600; background:rgba(255,255,255,0.05); border:1px solid var(--border-color);">
+          ✕ Close / Cancel
         </button>
       </div>
     `;
@@ -2026,7 +2051,7 @@ const App = (function() {
     if (step2) step2.style.display = 'none';
 
     if (cancelBtn) {
-      cancelBtn.style.display = (state.vehicles.length > 0) ? 'block' : 'none';
+      cancelBtn.style.display = 'block';
     }
 
     AppDB.getAll('owner').then(owners => {

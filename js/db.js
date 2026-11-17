@@ -168,6 +168,24 @@ const AppDB = (function() {
     });
   }
 
+  async function clearAll() {
+    const db = await open();
+    const stores = [
+      'owner', 'owner_documents', 'vehicles', 'fuel_entries',
+      'services', 'reminders', 'vehicle_documents', 'expenses', 'sync_queue'
+    ];
+    const tx = db.transaction(stores, 'readwrite');
+    stores.forEach(s => {
+      if (db.objectStoreNames.contains(s)) {
+        tx.objectStore(s).clear();
+      }
+    });
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => resolve(true);
+      tx.onerror = (e) => reject(e);
+    });
+  }
+
   return {
     open,
     initSeedIfEmpty,
@@ -178,7 +196,8 @@ const AppDB = (function() {
     getByIndex,
     put,
     remove,
-    clear
+    clear,
+    clearAll
   };
 })();
 
