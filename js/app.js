@@ -33,6 +33,20 @@ const App = (function() {
         .catch(err => console.log('[SW] Registration failed:', err));
     }
 
+    // PWA Install & Download Tracking via Vercel Analytics
+    window.addEventListener('beforeinstallprompt', () => {
+      if (typeof window.va === 'function') {
+        window.va('event', { name: 'pwa_install_prompt_shown' });
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] App installed successfully');
+      if (typeof window.va === 'function') {
+        window.va('event', { name: 'pwa_installed' });
+      }
+    });
+
     // Initialize DB & Seed if empty
     try {
       await AppDB.initSeedIfEmpty();
@@ -1790,6 +1804,10 @@ const App = (function() {
     const v = state.currentVehicle;
     if (!v) return;
 
+    if (typeof window.va === 'function') {
+      window.va('event', { name: 'download_vehicle_summary' });
+    }
+
     const totalLitres = state.fuelEntries.reduce((acc, f) => acc + (parseFloat(f.litres) || 0), 0);
     const totalFuelSpend = state.fuelEntries.reduce((acc, f) => acc + (parseFloat(f.totalCost) || 0), 0);
     const totalKm = state.fuelEntries.reduce((acc, f) => acc + (parseFloat(f.tripKm) || 0), 0);
@@ -1855,6 +1873,10 @@ const App = (function() {
     if (!f) return;
     const v = state.currentVehicle;
 
+    if (typeof window.va === 'function') {
+      window.va('event', { name: 'download_receipt_slip' });
+    }
+
     let slip = `========================================\n`;
     slip += `        REFUELLING RECEIPT SLIP        \n`;
     slip += `   VEHICLE MONITOR & FUEL INTELLIGENCE  \n`;
@@ -1887,6 +1909,9 @@ const App = (function() {
 
   function exportFuelAsCSV() {
     const v = state.currentVehicle;
+    if (typeof window.va === 'function') {
+      window.va('event', { name: 'export_fuel_csv' });
+    }
     let csv = "Date,Litres,PricePerLitre,TotalCost,TripKM,ActualKM_L,ClusterKM_L,AccuracyPercent,CostPerKM,Station,Pump,Status\n";
     state.fuelEntries.forEach(f => {
       csv += `${f.date},${f.litres},${f.pricePerLitre},${f.totalCost},${f.tripKm},${f.calculatedKml},${f.clusterKml},${f.accuracyPercentage},${f.costPerKm},"${f.stationName}","${f.pumpNumber || ''}","${f.status?.overallStatus || 'complete'}"\n`;
@@ -1900,6 +1925,9 @@ const App = (function() {
   }
 
   function exportDataAsJSON() {
+    if (typeof window.va === 'function') {
+      window.va('event', { name: 'export_json_backup' });
+    }
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
     const dlAnchor = document.createElement('a');
     dlAnchor.setAttribute("href", dataStr);

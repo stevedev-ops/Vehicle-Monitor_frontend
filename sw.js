@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vehicle-monitor-v7';
+const CACHE_NAME = 'vehicle-monitor-v8';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -46,6 +46,13 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Allow Vercel Analytics and insights to bypass Service Worker cache
+  if (url.pathname.startsWith('/_vercel/')) {
+    return;
+  }
+
   // 1. Navigation requests (Opening the app completely offline)
   if (event.request.mode === 'navigate') {
     event.respondWith(
