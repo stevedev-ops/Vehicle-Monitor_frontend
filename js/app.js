@@ -61,6 +61,7 @@ const App = (function() {
     dom.sidebarBtnDownloadSummary = document.getElementById('sidebarBtnDownloadSummary');
 
     // Modals
+    dom.modalOnboarding = document.getElementById('modalOnboarding');
     dom.modalSwitchVeh = document.getElementById('modalSwitchVeh');
     dom.modalRefuel = document.getElementById('modalRefuel');
     dom.modalEntryDetail = document.getElementById('modalEntryDetail');
@@ -102,11 +103,15 @@ const App = (function() {
         closeAllModals();
       }
       if (e.target.classList.contains('modal-overlay')) {
+        if (e.target.id === 'modalOnboarding' && state.vehicles.length === 0) {
+          return; // Must complete onboarding if no vehicle exists
+        }
         closeAllModals();
       }
     });
 
     // Form Submissions
+    setupOnboarding();
     setupRefuelForm();
     setupAIScanner();
     setupServiceForm();
@@ -131,11 +136,17 @@ const App = (function() {
     if (active) {
       state.currentVehicleId = active.id;
       state.currentVehicle = active;
+      await loadVehicleScopedData();
+      updateVehicleBanner();
+      renderCurrentTab();
+    } else {
+      // No vehicles registered yet: launch personalized onboarding
+      state.currentVehicleId = null;
+      state.currentVehicle = null;
+      updateVehicleBanner();
+      renderCurrentTab();
+      openOnboardingModal();
     }
-
-    await loadVehicleScopedData();
-    updateVehicleBanner();
-    renderCurrentTab();
   }
 
   async function loadVehicleScopedData() {
@@ -169,12 +180,18 @@ const App = (function() {
   }
 
   function updateVehicleBanner() {
-    if (!state.currentVehicle) return;
+    if (!state.currentVehicle) {
+      if (dom.activeVehPlate) dom.activeVehPlate.textContent = 'NO CAR';
+      if (dom.activeVehName) dom.activeVehName.textContent = 'Please add a car';
+      if (dom.activeVehStats) dom.activeVehStats.textContent = 'Register your vehicle to start tracking telemetry';
+      if (dom.topVehBreadcrumb) dom.topVehBreadcrumb.textContent = 'No Vehicle Selected';
+      return;
+    }
     const v = state.currentVehicle;
     if (dom.activeVehPlate) dom.activeVehPlate.textContent = v.registrationNumber;
     if (dom.activeVehName) dom.activeVehName.textContent = `${v.make} ${v.model}`;
     if (dom.activeVehStats) {
-      dom.activeVehStats.textContent = `${v.fuelType.toUpperCase()} · ${v.engineCapacity || '1500'}cc · Odo: ${formatNumber(v.currentOdometer)} km · Baseline: ${v.fuelBenchmark} KM/L`;
+      dom.activeVehStats.textContent = `${(v.fuelType || 'petrol').toUpperCase()} · ${v.engineCapacity || '1500'}cc · Odo: ${formatNumber(v.currentOdometer)} km · Baseline: ${v.fuelBenchmark} KM/L`;
     }
     if (dom.topVehBreadcrumb) {
       dom.topVehBreadcrumb.textContent = `${v.make} ${v.model} (${v.registrationNumber})`;
@@ -261,7 +278,18 @@ const App = (function() {
   function renderDashboard() {
     const v = state.currentVehicle;
     if (!v) {
-      dom.mainContent.innerHTML = `<div class="section-card">No vehicle registered. Please add a vehicle.</div>`;
+      dom.mainContent.innerHTML = `
+        <div class="section-card" style="text-align:center; padding:50px 20px;">
+          <div style="font-size:48px; margin-bottom:12px;">🚗</div>
+          <h2 style="font-size:19px; color:#38BDF8; margin-bottom:8px;">Welcome! No vehicle registered yet</h2>
+          <p style="font-size:13px; color:var(--text-muted); max-width:440px; margin:0 auto 20px auto;">
+            Enter your name and the car you have to start tracking fuel economy, running costs, and maintenance reminders.
+          </p>
+          <button class="btn-primary" style="padding:10px 24px; font-size:14px; margin:0 auto;" onclick="App.openOnboardingModal()">
+            + Set Up Your Car
+          </button>
+        </div>
+      `;
       return;
     }
 
@@ -506,7 +534,11 @@ const App = (function() {
         </div>
 
         <div class="garage-grid">
-          ${state.vehicles.map(v => {
+          ${state.vehicles.length === 0 ? `
+            <div style="grid-column: 1 / -1; text-align:center; padding:40px 10px; color:var(--text-muted); font-size:13px;">
+              No vehicles in your garage. Click <b>+ Register New Vehicle</b> to add your car.
+            </div>
+          ` : state.vehicles.map(v => {
             const isActive = v.id === state.currentVehicleId;
             return `
               <div class="vehicle-box ${isActive ? 'active-card' : ''}">
@@ -516,13 +548,15 @@ const App = (function() {
                 </div>
                 <div style="font-size:16px; font-weight:700; margin-bottom:4px;">${v.make} ${v.model} (${v.year})</div>
                 <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-                  • Fuel Type: <b>${v.fuelType.toUpperCase()}</b><br/>
+                  • Fuel Type: <b>${(v.fuelType || 'petrol').toUpperCase()}</b><br/>
                   • Engine: <b>${v.engineCapacity || 1500}cc</b><br/>
                   • Current Odometer: <b>${formatNumber(v.currentOdometer)} km</b><br/>
                   • Baseline Benchmark: <b>${v.fuelBenchmark} KM/L</b>
                 </div>
-                <div style="display:flex; gap:8px;">
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px;">
                   ${!isActive ? `<button class="btn-primary" style="padding:6px 12px; font-size:11px;" onclick="App.switchVehicle('${v.id}')">Select Vehicle</button>` : '<span style="color:#34D399; font-size:12px; font-weight:700;">Currently Active</span>'}
+                  <button class="btn-secondary" style="padding:6px 12px; font-size:11px;" onclick="App.openEditVehicleModal('${v.id}')">✏️ Edit Details</button>
+                  <button class="btn-secondary" style="padding:6px 12px; font-size:11px; color:#F87171; border-color:rgba(248,113,113,0.3);" onclick="App.deleteVehicle('${v.id}')">🗑️ Delete</button>
                 </div>
               </div>
             `;
@@ -898,6 +932,7 @@ const App = (function() {
           <button class="btn-secondary" onclick="App.openImportModal()">📊 Import Excel / CSV History</button>
           <button class="btn-secondary" onclick="App.exportFuelAsCSV()">📊 Export Fuel Log (CSV)</button>
           <button class="btn-secondary" onclick="App.exportDataAsJSON()">💾 Export JSON Backup</button>
+          <button class="btn-secondary" style="color:#F87171; border-color:rgba(248,113,113,0.4);" onclick="App.resetToCleanSetup()">🧹 Clear All Data & Restart Setup</button>
         </div>
       </div>
     `;
@@ -1508,28 +1543,64 @@ const App = (function() {
     });
   }
 
-  // Vehicle Form
+  // Vehicle Form (Supports Register New & Edit Existing)
   function setupVehicleForm() {
     const form = document.getElementById('formAddVehicle');
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const editId = document.getElementById('addVehEditId')?.value;
+      const plate = document.getElementById('addVehPlate').value.trim().toUpperCase();
+      const make = document.getElementById('addVehMake').value.trim();
+      const model = document.getElementById('addVehModel').value.trim();
+      const year = parseInt(document.getElementById('addVehYear').value) || 2018;
+      const fuelType = document.getElementById('addVehFuel').value;
+      const engineCapacity = parseInt(document.getElementById('addVehEngine').value) || 1500;
+      const currentOdometer = parseFloat(document.getElementById('addVehOdo').value) || 0;
+      const fuelBenchmark = parseFloat(document.getElementById('addVehBenchmark').value) || 16.0;
+
+      if (editId) {
+        // Edit mode
+        const v = state.vehicles.find(x => x.id === editId);
+        if (v) {
+          v.registrationNumber = plate;
+          v.make = make;
+          v.model = model;
+          v.year = year;
+          v.fuelType = fuelType;
+          v.engineCapacity = engineCapacity;
+          v.currentOdometer = currentOdometer;
+          v.fuelBenchmark = fuelBenchmark;
+
+          await AppDB.put('vehicles', v);
+          if (state.currentVehicleId === editId) {
+            state.currentVehicle = v;
+          }
+          closeAllModals();
+          updateVehicleBanner();
+          renderCurrentTab();
+          alert(`✅ Vehicle ${plate} updated successfully!`);
+          return;
+        }
+      }
+
+      // Create mode
       const newV = {
         id: `veh-${Date.now()}`,
-        registrationNumber: document.getElementById('addVehPlate').value.toUpperCase(),
-        make: document.getElementById('addVehMake').value,
-        model: document.getElementById('addVehModel').value,
-        year: parseInt(document.getElementById('addVehYear').value) || 2018,
-        fuelType: document.getElementById('addVehFuel').value,
-        engineCapacity: parseInt(document.getElementById('addVehEngine').value) || 1500,
-        currentOdometer: parseFloat(document.getElementById('addVehOdo').value) || 0,
-        fuelBenchmark: parseFloat(document.getElementById('addVehBenchmark').value) || 16.0,
+        registrationNumber: plate,
+        make: make,
+        model: model,
+        year: year,
+        fuelType: fuelType,
+        engineCapacity: engineCapacity,
+        currentOdometer: currentOdometer,
+        fuelBenchmark: fuelBenchmark,
         isActive: false
       };
 
       await AppDB.put('vehicles', newV);
       state.vehicles.push(newV);
       closeAllModals();
-      switchVehicle(newV.id);
+      await switchVehicle(newV.id);
     });
   }
 
@@ -1924,9 +1995,225 @@ const App = (function() {
     openModal(dom.modalReminder);
   }
 
+  let tempOwnerName = '';
+
+  function openOnboardingModal() {
+    closeAllModals();
+    const modal = document.getElementById('modalOnboarding');
+    const step1 = document.getElementById('onboardStep1');
+    const step2 = document.getElementById('onboardStep2');
+    if (!modal) return;
+
+    if (step1) step1.style.display = 'block';
+    if (step2) step2.style.display = 'none';
+
+    AppDB.getAll('owner').then(owners => {
+      const owner = owners && owners[0];
+      if (owner && owner.name) {
+        const inp = document.getElementById('onboardOwnerName');
+        if (inp) inp.value = owner.name;
+        tempOwnerName = owner.name;
+      }
+    });
+
+    openModal(modal);
+  }
+
+  function setupOnboarding() {
+    const form1 = document.getElementById('formOnboardStep1');
+    const form2 = document.getElementById('formOnboardStep2');
+    const step1 = document.getElementById('onboardStep1');
+    const step2 = document.getElementById('onboardStep2');
+    const btnBack = document.getElementById('btnOnboardBack');
+
+    form1?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('onboardOwnerName').value.trim();
+      const email = document.getElementById('onboardOwnerEmail')?.value.trim() || '';
+      if (!name) return;
+
+      tempOwnerName = name;
+      AppDB.put('owner', {
+        id: 'owner-main',
+        name: name,
+        email: email
+      });
+
+      const sub = document.getElementById('onboardGreetingSub');
+      if (sub) sub.textContent = `Nice to meet you, ${name}! Enter the car you have to start tracking.`;
+
+      step1.style.display = 'none';
+      step2.style.display = 'block';
+    });
+
+    btnBack?.addEventListener('click', () => {
+      step2.style.display = 'none';
+      step1.style.display = 'block';
+    });
+
+    form2?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const plate = document.getElementById('onboardVehPlate').value.trim().toUpperCase();
+      const make = document.getElementById('onboardVehMake').value.trim();
+      const model = document.getElementById('onboardVehModel').value.trim();
+      const year = parseInt(document.getElementById('onboardVehYear').value) || 2018;
+      const fuel = document.getElementById('onboardVehFuel').value;
+      const engine = parseInt(document.getElementById('onboardVehEngine').value) || 1500;
+      const odo = parseFloat(document.getElementById('onboardVehOdo').value) || 0;
+      const benchmark = parseFloat(document.getElementById('onboardVehBenchmark').value) || 16.0;
+
+      const newCar = {
+        id: `veh-${Date.now()}`,
+        registrationNumber: plate,
+        make: make,
+        model: model,
+        year: year,
+        fuelType: fuel,
+        engineCapacity: engine,
+        currentOdometer: odo,
+        fuelBenchmark: benchmark,
+        isActive: true
+      };
+
+      await AppDB.put('vehicles', newCar);
+      state.vehicles = [newCar];
+      state.currentVehicleId = newCar.id;
+      state.currentVehicle = newCar;
+
+      closeAllModals();
+      await loadVehicleScopedData();
+      updateVehicleBanner();
+      renderCurrentTab();
+
+      alert(`🎉 Welcome ${tempOwnerName || ''}! Your ${make} ${model} (${plate}) is ready.`);
+    });
+  }
+
   function openAddVehicleModal() {
     closeAllModals();
+    const editIdEl = document.getElementById('addVehEditId');
+    if (editIdEl) editIdEl.value = '';
+    const titleEl = document.getElementById('addVehModalTitle');
+    if (titleEl) titleEl.textContent = 'Register New Vehicle';
+    const btn = document.getElementById('btnSubmitVehicle');
+    if (btn) btn.textContent = 'Register Vehicle & Set Active';
+
+    document.getElementById('addVehPlate').value = '';
+    document.getElementById('addVehMake').value = '';
+    document.getElementById('addVehModel').value = '';
+    document.getElementById('addVehYear').value = '2018';
+    document.getElementById('addVehFuel').value = 'petrol';
+    document.getElementById('addVehEngine').value = '1500';
+    document.getElementById('addVehOdo').value = '';
+    document.getElementById('addVehBenchmark').value = '16.0';
+
     openModal(dom.modalAddVeh);
+  }
+
+  function openEditVehicleModal(vehicleId) {
+    const v = state.vehicles.find(x => x.id === vehicleId);
+    if (!v) return;
+
+    closeAllModals();
+    const editIdEl = document.getElementById('addVehEditId');
+    if (editIdEl) editIdEl.value = v.id;
+    const titleEl = document.getElementById('addVehModalTitle');
+    if (titleEl) titleEl.textContent = `Edit Vehicle: ${v.registrationNumber}`;
+    const btn = document.getElementById('btnSubmitVehicle');
+    if (btn) btn.textContent = 'Update Vehicle Details';
+
+    document.getElementById('addVehPlate').value = v.registrationNumber || '';
+    document.getElementById('addVehMake').value = v.make || '';
+    document.getElementById('addVehModel').value = v.model || '';
+    document.getElementById('addVehYear').value = v.year || 2018;
+    document.getElementById('addVehFuel').value = v.fuelType || 'petrol';
+    document.getElementById('addVehEngine').value = v.engineCapacity || 1500;
+    document.getElementById('addVehOdo').value = v.currentOdometer || 0;
+    document.getElementById('addVehBenchmark').value = v.fuelBenchmark || 16.0;
+
+    openModal(dom.modalAddVeh);
+  }
+
+  async function deleteVehicle(vehicleId) {
+    const v = state.vehicles.find(x => x.id === vehicleId);
+    if (!v) return;
+
+    const confirmed = confirm(`Are you sure you want to delete ${v.registrationNumber} (${v.make} ${v.model})?\n\nThis will permanently delete this vehicle and all associated fill-ups, service logs, and documents.`);
+    if (!confirmed) return;
+
+    // 1. Remove from IndexedDB
+    await AppDB.remove('vehicles', vehicleId);
+
+    // 2. Cascade delete related logs
+    const fuel = await AppDB.getAll('fuel_entries');
+    for (const f of fuel) {
+      if (f.vehicleId === vehicleId) await AppDB.remove('fuel_entries', f.id);
+    }
+    const srv = await AppDB.getAll('services');
+    for (const s of srv) {
+      if (s.vehicleId === vehicleId) await AppDB.remove('services', s.id);
+    }
+    const rem = await AppDB.getAll('reminders');
+    for (const r of rem) {
+      if (r.vehicleId === vehicleId) await AppDB.remove('reminders', r.id);
+    }
+    const exp = await AppDB.getAll('expenses');
+    for (const e of exp) {
+      if (e.vehicleId === vehicleId) await AppDB.remove('expenses', e.id);
+    }
+    const docs = await AppDB.getAll('vehicle_documents');
+    for (const d of docs) {
+      if (d.vehicleId === vehicleId) await AppDB.remove('vehicle_documents', d.id);
+    }
+
+    // 3. Update local state
+    state.vehicles = state.vehicles.filter(x => x.id !== vehicleId);
+
+    // 4. If deleted active vehicle, switch or launch onboarding
+    if (state.currentVehicleId === vehicleId) {
+      if (state.vehicles.length > 0) {
+        await switchVehicle(state.vehicles[0].id);
+      } else {
+        state.currentVehicleId = null;
+        state.currentVehicle = null;
+        updateVehicleBanner();
+        renderCurrentTab();
+        openOnboardingModal();
+        return;
+      }
+    }
+
+    updateVehicleBanner();
+    renderCurrentTab();
+    alert(`🗑️ Vehicle ${v.registrationNumber} deleted.`);
+  }
+
+  async function resetToCleanSetup() {
+    const confirmed = confirm('⚠️ Clear All Data & Start Fresh?\n\nThis will remove all demo/old vehicles, fuel logs, and service records so you can start completely clean with your own name and car.\n\nContinue?');
+    if (!confirmed) return;
+
+    await AppDB.clear('vehicles');
+    await AppDB.clear('fuel_entries');
+    await AppDB.clear('services');
+    await AppDB.clear('reminders');
+    await AppDB.clear('expenses');
+    await AppDB.clear('vehicle_documents');
+    await AppDB.clear('owner_documents');
+    await AppDB.clear('owner');
+
+    state.vehicles = [];
+    state.fuelEntries = [];
+    state.services = [];
+    state.reminders = [];
+    state.expenses = [];
+    state.vehicleDocuments = [];
+    state.ownerDocuments = [];
+    state.currentVehicleId = null;
+    state.currentVehicle = null;
+
+    updateVehicleBanner();
+    renderCurrentTab();
+    openOnboardingModal();
   }
 
   function openImportModal() {
@@ -1956,6 +2243,10 @@ const App = (function() {
     openDocumentModal,
     openReminderModal,
     openAddVehicleModal,
+    openEditVehicleModal,
+    deleteVehicle,
+    openOnboardingModal,
+    resetToCleanSetup,
     openSwitchVehModal,
     openImportModal,
     runAIPreset,

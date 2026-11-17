@@ -131,6 +131,111 @@
   <!-- MODALS -->
   <!-- ===================================================================== -->
 
+  <!-- 0. ONBOARDING WIZARD (Step 1: Your Name -> Step 2: Your Car) -->
+  <div class="modal-overlay" id="modalOnboarding">
+    <div class="modal-box" style="max-width:520px;">
+      <!-- Step 1: Owner Profile -->
+      <div id="onboardStep1">
+        <div class="modal-header" style="border-bottom:none; padding-bottom:4px;">
+          <div>
+            <div class="modal-title" style="font-size:18px;">👋 Welcome to Vehicle Monitor</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">
+              Let's personalize your setup. First, what is your name?
+            </p>
+          </div>
+        </div>
+        <div class="modal-body" style="padding-top:14px;">
+          <form id="formOnboardStep1">
+            <div class="form-group" style="margin-bottom:16px;">
+              <label class="form-label">Your Name</label>
+              <input type="text" class="form-input" id="onboardOwnerName" placeholder="e.g. Steve" required autofocus style="font-size:14px; padding:10px 12px;">
+            </div>
+            <div class="form-group" style="margin-bottom:20px;">
+              <label class="form-label">Email Address (Optional)</label>
+              <input type="email" class="form-input" id="onboardOwnerEmail" placeholder="e.g. steve@example.com">
+            </div>
+            <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:10px; font-size:14px;">
+              Next: Add Your Car ➔
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Step 2: First Vehicle -->
+      <div id="onboardStep2" style="display:none;">
+        <div class="modal-header" style="border-bottom:none; padding-bottom:4px;">
+          <div>
+            <div class="modal-title" style="font-size:18px;">🚗 Register Your Car</div>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:4px;" id="onboardGreetingSub">
+              Enter the car you drive to start tracking fuel economy and maintenance.
+            </p>
+          </div>
+        </div>
+        <div class="modal-body" style="padding-top:14px;">
+          <form id="formOnboardStep2">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Registration Plate</label>
+                <input type="text" class="form-input" id="onboardVehPlate" placeholder="e.g. KDA 456B" required style="text-transform:uppercase;">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Year of Manufacture</label>
+                <input type="number" class="form-input" id="onboardVehYear" value="2018" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Make</label>
+                <input type="text" class="form-input" id="onboardVehMake" placeholder="e.g. Toyota" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Model</label>
+                <input type="text" class="form-input" id="onboardVehModel" placeholder="e.g. Axio" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Fuel Type</label>
+                <select class="form-select" id="onboardVehFuel">
+                  <option value="petrol">Petrol</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="electric">Electric</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Engine Capacity (cc)</label>
+                <input type="number" class="form-input" id="onboardVehEngine" placeholder="e.g. 1500" value="1500">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Current Odometer (KM)</label>
+                <input type="number" class="form-input" id="onboardVehOdo" placeholder="e.g. 112000" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Expected Benchmark (KM/L)</label>
+                <input type="number" step="0.1" class="form-input" id="onboardVehBenchmark" value="16.0" required>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:12px;">
+              <button type="button" class="btn-secondary" id="btnOnboardBack" style="flex:1; justify-content:center;">
+                ⬅ Back
+              </button>
+              <button type="submit" class="btn-primary" style="flex:2; justify-content:center;">
+                🚀 Save & Start ➔
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 1. VEHICLE SWITCHER MODAL -->
   <div class="modal-overlay" id="modalSwitchVeh">
     <div class="modal-box">
@@ -474,19 +579,20 @@
     </div>
   </div>
 
-  <!-- 7. ADD VEHICLE MODAL -->
+  <!-- 7. ADD / EDIT VEHICLE MODAL -->
   <div class="modal-overlay" id="modalAddVeh">
     <div class="modal-box">
       <div class="modal-header">
-        <div class="modal-title">Register New Vehicle</div>
+        <div class="modal-title" id="addVehModalTitle">Register New Vehicle</div>
         <button class="modal-close" data-close-modal>&times;</button>
       </div>
       <div class="modal-body">
         <form id="formAddVehicle">
+          <input type="hidden" id="addVehEditId">
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Registration Number</label>
-              <input type="text" class="form-input" id="addVehPlate" placeholder="e.g. KDA 456B" required>
+              <input type="text" class="form-input" id="addVehPlate" placeholder="e.g. KDA 456B" required style="text-transform:uppercase;">
             </div>
             <div class="form-group">
               <label class="form-label">Year of Manufacture</label>
@@ -532,7 +638,7 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+          <button type="submit" class="btn-primary" id="btnSubmitVehicle" style="width:100%; justify-content:center;">
             Register Vehicle & Set Active
           </button>
         </form>

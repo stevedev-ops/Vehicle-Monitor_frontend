@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vehicle-monitor-v5';
+const CACHE_NAME = 'vehicle-monitor-v6';
 const ASSETS_TO_CACHE = [
   '/',
   '/css/app.css',

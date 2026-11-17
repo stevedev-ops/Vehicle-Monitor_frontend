@@ -67,32 +67,34 @@ const AppDB = (function() {
   }
 
   async function initSeedIfEmpty() {
+    // New setup: Starts completely clean and prompts for user name & first car
+    return Promise.resolve();
+  }
+
+  async function seedDemoData() {
+    if (typeof SEED_DATA === 'undefined') return;
     const db = await open();
-    const count = await getCount('vehicles');
-    if (count === 0 && typeof SEED_DATA !== 'undefined') {
-      console.log('IndexedDB is empty, seeding initial records...');
-      const tx = db.transaction([
-        'owner', 'owner_documents', 'vehicles', 'fuel_entries',
-        'services', 'reminders', 'vehicle_documents', 'expenses'
-      ], 'readwrite');
+    const tx = db.transaction([
+      'owner', 'owner_documents', 'vehicles', 'fuel_entries',
+      'services', 'reminders', 'vehicle_documents', 'expenses'
+    ], 'readwrite');
 
-      tx.objectStore('owner').put(SEED_DATA.owner);
-      SEED_DATA.ownerDocuments.forEach(d => tx.objectStore('owner_documents').put(d));
-      SEED_DATA.vehicles.forEach(v => tx.objectStore('vehicles').put(v));
-      SEED_DATA.fuelEntries.forEach(f => tx.objectStore('fuel_entries').put(f));
-      SEED_DATA.services.forEach(s => tx.objectStore('services').put(s));
-      SEED_DATA.reminders.forEach(r => tx.objectStore('reminders').put(r));
-      SEED_DATA.vehicleDocuments.forEach(d => tx.objectStore('vehicle_documents').put(d));
-      SEED_DATA.expenses.forEach(e => tx.objectStore('expenses').put(e));
+    tx.objectStore('owner').put(SEED_DATA.owner);
+    SEED_DATA.ownerDocuments.forEach(d => tx.objectStore('owner_documents').put(d));
+    SEED_DATA.vehicles.forEach(v => tx.objectStore('vehicles').put(v));
+    SEED_DATA.fuelEntries.forEach(f => tx.objectStore('fuel_entries').put(f));
+    SEED_DATA.services.forEach(s => tx.objectStore('services').put(s));
+    SEED_DATA.reminders.forEach(r => tx.objectStore('reminders').put(r));
+    SEED_DATA.vehicleDocuments.forEach(d => tx.objectStore('vehicle_documents').put(d));
+    SEED_DATA.expenses.forEach(e => tx.objectStore('expenses').put(e));
 
-      return new Promise((resolve, reject) => {
-        tx.oncomplete = () => {
-          console.log('Seeding IndexedDB complete!');
-          resolve();
-        };
-        tx.onerror = (e) => reject(e);
-      });
-    }
+    return new Promise((resolve, reject) => {
+      tx.oncomplete = () => {
+        console.log('Sample demo data seeded!');
+        resolve();
+      };
+      tx.onerror = (e) => reject(e);
+    });
   }
 
   async function getCount(storeName) {
@@ -169,6 +171,7 @@ const AppDB = (function() {
   return {
     open,
     initSeedIfEmpty,
+    seedDemoData,
     getCount,
     getAll,
     getById,
