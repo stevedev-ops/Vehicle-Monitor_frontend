@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vehicle Monitor & Fuel Intelligence</title>
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#0284C7">
+  <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+  <!-- APP LAYOUT (SIDEBAR + MAIN VIEWPORT) -->
+  <div class="app-layout">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="app-sidebar" id="appSidebar">
+      <!-- Sidebar Header / Brand -->
+      <div class="sidebar-header">
+        <div class="brand-wrap">
+          <div class="brand-icon">⛽</div>
+          <div>
+            <div class="brand-title">Vehicle Monitor</div>
+            <div class="brand-sub">Fleet Intelligence</div>
+          </div>
+        </div>
+        <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">&times;</button>
+      </div>
+
+      <!-- Active Vehicle Box inside Sidebar -->
+      <div class="sidebar-veh-card">
+        <div class="sidebar-veh-header">
+          <span class="sidebar-veh-label">ACTIVE VEHICLE</span>
+          <span class="pill-active">ACTIVE</span>
+        </div>
+        <div class="sidebar-veh-plate" id="activeVehPlate">KCX 123A</div>
+        <div class="sidebar-veh-name" id="activeVehName">Toyota Axio</div>
+        <div class="sidebar-veh-stats" id="activeVehStats">
+          PETROL · 1500cc · Odo: 158,891 km · Baseline: 17.50 KM/L
+        </div>
+        <button class="btn-switch-veh-sidebar" id="btnSwitchVeh">
+          <span>🔄</span> Switch Vehicle
+        </button>
+      </div>
+
+      <!-- Sidebar Navigation Links (8 Modules) -->
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-group-title">NAVIGATION MODULES</div>
+        <div class="sidebar-link active" data-tab="dashboard">
+          <span class="sidebar-link-icon">📊</span>
+          <span class="sidebar-link-text">Dashboard</span>
+        </div>
+        <div class="sidebar-link" data-tab="fuel">
+          <span class="sidebar-link-icon">⛽</span>
+          <span class="sidebar-link-text">Fuel Monitoring</span>
+        </div>
+        <div class="sidebar-link" data-tab="vehicles">
+          <span class="sidebar-link-icon">🚗</span>
+          <span class="sidebar-link-text">My Vehicles</span>
+        </div>
+        <div class="sidebar-link" data-tab="maintenance">
+          <span class="sidebar-link-icon">🔧</span>
+          <span class="sidebar-link-text">Maintenance</span>
+        </div>
+        <div class="sidebar-link" data-tab="documents">
+          <span class="sidebar-link-icon">📋</span>
+          <span class="sidebar-link-text">Documents</span>
+        </div>
+        <div class="sidebar-link" data-tab="expenses">
+          <span class="sidebar-link-icon">💳</span>
+          <span class="sidebar-link-text">Expenses (TCO)</span>
+        </div>
+        <div class="sidebar-link" data-tab="analytics">
+          <span class="sidebar-link-icon">📈</span>
+          <span class="sidebar-link-text">Analytics & Charts</span>
+        </div>
+        <div class="sidebar-link" data-tab="settings">
+          <span class="sidebar-link-icon">⚙️</span>
+          <span class="sidebar-link-text">Settings & Backup</span>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button class="btn-ai" id="sidebarBtnAIScan" style="width:100%; justify-content:center; padding:8px 10px; font-size:11.5px;">
+            <span>⚡</span> AI Vision Scan
+          </button>
+          <button class="btn-secondary" id="sidebarBtnDownloadSummary" style="width:100%; justify-content:center; padding:7px 10px; font-size:11px;">
+            <span>📥</span> Download Vehicle Details
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- SIDEBAR BACKDROP FOR MOBILE -->
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- MAIN VIEWPORT -->
+    <div class="app-viewport">
+      <!-- Top Navigation Bar -->
+      <header class="top-header">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="Toggle navigation">
+            <span>☰</span>
+          </button>
+          <div class="top-breadcrumb">
+            <span style="color:var(--text-muted); font-size:12px;">Active Vehicle:</span>
+            <b style="color:#38BDF8; font-size:13px;" id="topVehBreadcrumb">Toyota Axio (KCX 123A)</b>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn-secondary" id="topBtnDownload" style="padding:7px 12px; font-size:12px;">
+            <span>📥</span> Download Details
+          </button>
+          <button class="btn-primary" id="topBtnRefuel" style="padding:7px 14px; font-size:12px;">
+            <span>⛽</span> + Log Refuel
+          </button>
+        </div>
+      </header>
+
+      <!-- MAIN DYNAMIC CONTENT CONTAINER -->
+      <main class="app-container" id="mainContent">
+        <!-- Populated dynamically by app.js -->
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODALS -->
+  <!-- ===================================================================== -->
+
+  <!-- 1. VEHICLE SWITCHER MODAL -->
+  <div class="modal-overlay" id="modalSwitchVeh">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Switch Active Vehicle</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Select a vehicle to swap the dashboard context. Every fuel entry, service record, document and expense belongs to the selected car.
+        </p>
+        <div id="vehSwitchList" style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+          <!-- Dynamically populated -->
+        </div>
+
+        <button class="btn-primary" style="width:100%; justify-content:center;" onclick="App.openAddVehicleModal()">
+          + Register New Vehicle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. QUICK REFUEL MODAL (Logger & Editor) -->
+  <div class="modal-overlay" id="modalRefuel">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="refuelModalTitle">Log Full Tank</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formRefuel">
+          <input type="hidden" id="refuelVehId">
+          <input type="hidden" id="refuelEditId">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date & Time</label>
+              <input type="datetime-local" class="form-input" id="refuelDate" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Petrol Station</label>
+              <input type="text" class="form-input" id="refuelStation" placeholder="e.g. Rubis Westlands" required>
+            </div>
+          </div>
+
+          <!-- Smart Fuel Math Engine Banner -->
+          <div style="background:rgba(2,132,199,0.08); border:1px solid rgba(2,132,199,0.25); border-radius:6px; padding:7px 10px; margin-bottom:12px; font-size:11px; display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span>⚡</span>
+              <span style="color:#38BDF8; font-weight:600;">Smart Fuel Math Engine:</span>
+              <span style="color:var(--text-muted);">Enter <b>Litres & Price</b> &rarr; gets Total &bull; <b>Price & Total</b> &rarr; gets Litres &bull; <b>Litres & Total</b> &rarr; gets Price</span>
+            </div>
+            <span id="mathSolveIndicator" style="background:rgba(16,185,129,0.2); color:#34D399; font-weight:700; font-size:10px; padding:2px 6px; border-radius:4px;">Ready</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Litres Pumped</span>
+                <span id="tagLitres" style="font-size:10px; color:#38BDF8; font-weight:normal;"></span>
+              </label>
+              <input type="number" step="0.01" class="form-input" id="refuelLitres" placeholder="e.g. 28.70" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Price per Litre (Ksh)</span>
+                <span id="tagPrice" style="font-size:10px; color:#38BDF8; font-weight:normal;"></span>
+              </label>
+              <input type="number" step="0.01" class="form-input" id="refuelPrice" placeholder="e.g. 213.97" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Total Cost (Ksh)</span>
+                <span id="tagTotal" style="font-size:10px; color:#38BDF8; font-weight:normal;"></span>
+              </label>
+              <input type="number" step="0.01" class="form-input" id="refuelTotal" placeholder="Auto-calculated" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pump / Nozzle # (Optional)</label>
+              <input type="text" class="form-input" id="refuelPump" placeholder="e.g. P3 (or leave blank)">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Trip Distance (KM)</label>
+              <input type="number" step="0.1" class="form-input" id="refuelTrip" placeholder="e.g. 480" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Car Cluster KM/L (Trip B)</label>
+              <input type="number" step="0.1" class="form-input" id="refuelCluster" placeholder="e.g. 17.2">
+            </div>
+          </div>
+
+          <!-- Real-Time Dynamic Calculations Preview Card -->
+          <div class="calc-preview-card">
+            <div class="calc-metric-row">
+              <span>Ground-Truth Pump Economy:</span>
+              <span class="calc-highlight" id="previewCalcKml">-</span>
+            </div>
+            <div class="calc-metric-row">
+              <span>Running Fuel Cost:</span>
+              <span class="calc-highlight" id="previewCostKm">-</span>
+            </div>
+            <div class="calc-metric-row">
+              <span>Cluster Gauge Accuracy:</span>
+              <span class="calc-highlight" id="previewAccuracy">-</span>
+            </div>
+            <div class="calc-metric-row" style="border-top:1px dashed var(--border-color); padding-top:4px; margin-top:4px;">
+              <span>Math Balance (L &times; Price = Total):</span>
+              <span class="calc-highlight" id="previewMathCheck">-</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Payment Method</label>
+              <select class="form-select" id="refuelPayment">
+                <option value="card">Card Payment (POS)</option>
+                <option value="mpesa">M-Pesa / Mobile Money</option>
+                <option value="cash">Cash</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; padding-top:20px;">
+              <label style="font-size:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="refuelHasReceipt" style="width:16px; height:16px;">
+                Receipt attached (Optional)
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-input" id="refuelNotes" placeholder="e.g. Waiyaki way rush hour, A/C off">
+          </div>
+
+          <div id="refuelReviewAlert" style="display:none; background:rgba(239,68,68,0.2); border:1px solid #EF4444; padding:8px 12px; border-radius:6px; font-size:11px; margin-bottom:12px; color:#FCA5A5;">
+            ⚠️ Anomaly detected: Total cost does not match Litres × Price/L.
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:12px;">
+            Save Refuelling Entry
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ENTRY INSPECTION & 5-STATUS BREAKDOWN MODAL -->
+  <div class="modal-overlay" id="modalEntryDetail">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Refuelling Entry Verification & Statuses</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body" id="entryDetailContent">
+        <!-- Populated dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. OFFLINE AI SCANNER MODAL (WITH 1-CLICK TEST PRESETS) -->
+  <div class="modal-overlay" id="modalAIScan">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">⚡ Offline AI Vision & SMS Scanner</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Extract refuelling numbers directly on your phone with zero network latency. 100% on-device AI.
+        </p>
+
+        <!-- 1-Click Test Presets for Instant Testing -->
+        <div style="background:var(--bg-card); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:14px;">
+          <div style="font-size:11px; font-weight:700; color:#38BDF8; margin-bottom:6px; text-transform:uppercase;">
+            🚀 Quick 1-Click Test Presets (Try from your desk):
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button type="button" class="btn-secondary" style="font-size:11px; justify-content:flex-start; padding:6px 10px;" onclick="App.runAIPreset('pump')">
+              ⛽ <b>Pump Preset:</b> 28.70 Litres @ 213.97 (Rubis Westlands P3)
+            </button>
+            <button type="button" class="btn-secondary" style="font-size:11px; justify-content:flex-start; padding:6px 10px;" onclick="App.runAIPreset('dash')">
+              🚗 <b>Cluster Preset:</b> Trip 480.0 km, 17.2 KM/L (Odo 158,891 km)
+            </button>
+            <button type="button" class="btn-secondary" style="font-size:11px; justify-content:flex-start; padding:6px 10px;" onclick="App.runAIPreset('sms')">
+              💬 <b>M-Pesa SMS Preset:</b> Ksh 6,140.00 sent to RUBIS WESTLANDS
+            </button>
+          </div>
+        </div>
+
+        <!-- Dropzone for Camera or File Upload -->
+        <div class="camera-dropzone" id="aiDropzone">
+          <div class="camera-icon">📷</div>
+          <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Take Photo of Fuel Pump or Dash Cluster</div>
+          <div style="font-size:11px; color:var(--text-muted);">Tap to open camera or upload image (100% On-Device Canvas OCR)</div>
+          <input type="file" id="aiFileInput" accept="image/*" capture="environment" style="display:none;">
+        </div>
+
+        <div id="aiScanStatus" style="font-size:11px; color:#38BDF8; text-align:center; margin:8px 0; min-height:16px;"></div>
+
+        <div style="text-align:center; margin:14px 0; font-size:11px; color:var(--text-muted); position:relative;">
+          <span style="background:var(--bg-surface); padding:0 8px; position:relative; z-index:1;">OR PASTE BANK / M-PESA SMS</span>
+          <hr style="border:none; border-top:1px solid var(--border-color); position:absolute; top:50%; width:100%; margin:0;">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Transaction SMS Message</label>
+          <textarea class="form-textarea" id="smsInputText" rows="3" placeholder="e.g. Confirmed. Ksh6,140.00 sent to RUBIS WESTLANDS on 15/11/26 at 8:30 AM..."></textarea>
+        </div>
+
+        <button class="btn-ai" id="btnParseSMS" style="width:100%; justify-content:center;">
+          ⚡ Parse SMS & Fill Form
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. LOG SERVICE MODAL -->
+  <div class="modal-overlay" id="modalService">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Log Vehicle Service & Maintenance</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formService">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Service Date</label>
+              <input type="date" class="form-input" id="srvDate" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Odometer Reading (KM)</label>
+              <input type="number" class="form-input" id="srvOdo" placeholder="e.g. 158891" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Service Type</label>
+              <input type="text" class="form-input" id="srvType" value="Routine Service" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="srvCat">
+                <option value="engine_oil">Engine Oil & Filter</option>
+                <option value="air_filter">Air Filter</option>
+                <option value="fuel_filter">Fuel Filter</option>
+                <option value="brake_pads">Brake Pads & Discs</option>
+                <option value="tyres">Tyres & Wheel Alignment</option>
+                <option value="battery">Battery</option>
+                <option value="coolant">Coolant System</option>
+                <option value="transmission">Transmission Fluid (CVT/ATF)</option>
+                <option value="spark_plugs">Spark Plugs</option>
+                <option value="inspection">General Inspection & Suspension</option>
+                <option value="other">Other Repairs</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Garage / Mechanic</label>
+            <input type="text" class="form-input" id="srvGarage" placeholder="e.g. AutoCare Westlands">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Parts Replaced / Work Description</label>
+            <input type="text" class="form-input" id="srvPartsReplaced" placeholder="e.g. 0W-20 Full Synthetic Oil (4L), Oil Filter">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Parts Cost (Ksh)</label>
+              <input type="number" class="form-input" id="srvParts" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Labour Cost (Ksh)</label>
+              <input type="number" class="form-input" id="srvLabour" value="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-input" id="srvNotes" placeholder="Additional observations">
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            Save Service Record
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. LOG EXPENSE MODAL -->
+  <div class="modal-overlay" id="modalExpense">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Log Non-Fuel Operating Expense</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formExpense">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="expDate" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select class="form-select" id="expCat">
+                <option value="parking">Parking Fees</option>
+                <option value="tolls">Highway Tolls (Expressway)</option>
+                <option value="cleaning">Car Wash & Detailing</option>
+                <option value="insurance">Insurance Premiums</option>
+                <option value="repairs">Non-Service Repairs</option>
+                <option value="other">Other Incidentals</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Amount (Ksh)</label>
+            <input type="number" step="0.01" class="form-input" id="expAmount" placeholder="e.g. 360" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-input" id="expNotes" placeholder="e.g. Expressway Westlands to JKIA">
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            Save Expense
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. ADD VEHICLE MODAL -->
+  <div class="modal-overlay" id="modalAddVeh">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Register New Vehicle</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formAddVehicle">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Registration Number</label>
+              <input type="text" class="form-input" id="addVehPlate" placeholder="e.g. KDA 456B" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Year of Manufacture</label>
+              <input type="number" class="form-input" id="addVehYear" value="2018" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Make</label>
+              <input type="text" class="form-input" id="addVehMake" placeholder="e.g. Toyota" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model</label>
+              <input type="text" class="form-input" id="addVehModel" placeholder="e.g. Fielder" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Fuel Type</label>
+              <select class="form-select" id="addVehFuel">
+                <option value="petrol">Petrol</option>
+                <option value="diesel">Diesel</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="electric">Electric</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Engine Capacity (cc)</label>
+              <input type="number" class="form-input" id="addVehEngine" placeholder="e.g. 1800">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Current Odometer (KM)</label>
+              <input type="number" class="form-input" id="addVehOdo" placeholder="e.g. 82450" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fuel Benchmark (KM/L)</label>
+              <input type="number" step="0.1" class="form-input" id="addVehBenchmark" value="16.0" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            Register Vehicle & Set Active
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. ADD DOCUMENT MODAL -->
+  <div class="modal-overlay" id="modalDocument">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Add Vehicle or Driver Document</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formDocument">
+          <div class="form-group">
+            <label class="form-label">Document Scope</label>
+            <select class="form-select" id="docScope">
+              <option value="vehicle">Vehicle Document (Insurance, Inspection, Logbook)</option>
+              <option value="owner">Driver / Owner Document (Driving Licence)</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Document Type</label>
+              <select class="form-select" id="docType">
+                <option value="insurance">Insurance Policy</option>
+                <option value="inspection">Inspection Certificate</option>
+                <option value="driving_licence">Driving Licence</option>
+                <option value="logbook">Logbook / Title Copy</option>
+                <option value="permit">Commercial / Parking Permit</option>
+                <option value="other">Other Compliance Document</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Issuer / Provider</label>
+              <input type="text" class="form-input" id="docProvider" placeholder="e.g. APA Insurance / NTSA" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Document / Policy Number</label>
+            <input type="text" class="form-input" id="docNumber" placeholder="e.g. POL-2026-9921" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Issue Date</label>
+              <input type="date" class="form-input" id="docIssueDate">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Expiry Date</label>
+              <input type="date" class="form-input" id="docExpiryDate" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-input" id="docNotes" placeholder="e.g. Comprehensive coverage with excess protector">
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            Save Document Record
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9. ADD SERVICE REMINDER MODAL -->
+  <div class="modal-overlay" id="modalReminder">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Configure Service Reminder Rule</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="formReminder">
+          <div class="form-group">
+            <label class="form-label">Reminder Title</label>
+            <input type="text" class="form-input" id="remTitle" placeholder="e.g. Spark Plugs Replacement" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Service Category</label>
+              <select class="form-select" id="remCat">
+                <option value="engine_oil">Engine Oil & Filter</option>
+                <option value="air_filter">Air Filter</option>
+                <option value="fuel_filter">Fuel Filter</option>
+                <option value="brake_pads">Brake Pads & Discs</option>
+                <option value="tyres">Tyres & Wheel Alignment</option>
+                <option value="transmission">Transmission Fluid (CVT/ATF)</option>
+                <option value="spark_plugs">Spark Plugs</option>
+                <option value="coolant">Coolant System</option>
+                <option value="battery">Battery</option>
+                <option value="inspection">General Inspection</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Interval Distance (KM)</label>
+              <input type="number" class="form-input" id="remIntervalKm" value="5000" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Interval Time (Months)</label>
+              <input type="number" class="form-input" id="remIntervalMonths" value="6" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Service Date</label>
+              <input type="date" class="form-input" id="remLastDate" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
+            Set Service Reminder
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10. HISTORICAL SPREADSHEET / CSV IMPORTER MODAL -->
+  <div class="modal-overlay" id="modalImport">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">Import Spreadsheet / CSV Fuel History</div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+          Import your historical fill-ups (e.g. from your 318-row KCX Excel sheet). Columns supported: <code>Litres</code>, <code>Price/L</code>, <code>Trip</code>, <code>KM/L</code>, <code>TripB</code>, <code>Accu%</code>, <code>Ksh/KM</code>.
+        </p>
+
+        <div class="camera-dropzone" id="csvDropzone">
+          <div style="font-size:32px; margin-bottom:6px;">📊</div>
+          <div style="font-weight:700; font-size:13px; margin-bottom:4px;">Drag & Drop or Choose CSV File</div>
+          <div style="font-size:11px; color:var(--text-muted);">Parses all columns and fixes #DIV/0! errors automatically</div>
+          <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none;">
+        </div>
+
+        <div id="csvImportStatus" style="font-size:11.5px; color:#38BDF8; margin-top:10px; min-height:16px;"></div>
+
+        <div style="margin-top:16px; border-top:1px solid var(--border-color); padding-top:14px; display:flex; justify-content:space-between;">
+          <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+          <button type="button" class="btn-primary" id="btnTriggerSampleImport">
+            Import 20 Sample Historical Fill-ups
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT INCLUDES -->
+  <script src="/static/js/db.js"></script>
+  <script src="/static/js/ai_engine.js"></script>
+  <script src="/static/js/seed_data.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
