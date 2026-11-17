@@ -376,16 +376,11 @@ const App = (function() {
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Litres</th>
-                <th>Price/L</th>
-                <th>Trip KM</th>
-                <th>Actual KM/L</th>
-                <th>Cluster KM/L</th>
-                <th>Accu %</th>
-                <th>Cost/KM</th>
-                <th>Overall Status</th>
-                <th>Action</th>
+                <th style="width:28%;">Date & Station</th>
+                <th style="width:20%;">Fuel Pumped</th>
+                <th style="width:22%;">Total Cost</th>
+                <th style="width:18%;">Economy</th>
+                <th style="width:12%; text-align:right;">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -457,18 +452,11 @@ const App = (function() {
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Litres</th>
-                <th>Price/L</th>
-                <th>Total (Ksh)</th>
-                <th>Trip (KM)</th>
-                <th>Actual KM/L</th>
-                <th>Car KM/L</th>
-                <th>Accuracy %</th>
-                <th>Cost/KM</th>
-                <th>Station / Pump</th>
-                <th>Overall Status</th>
-                <th>Detail</th>
+                <th style="width:28%;">Date & Station</th>
+                <th style="width:20%;">Fuel Pumped</th>
+                <th style="width:22%;">Total Cost</th>
+                <th style="width:18%;">Economy</th>
+                <th style="width:12%; text-align:right;">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -484,41 +472,39 @@ const App = (function() {
 
   function renderFuelTableRows(entries) {
     if (!entries || entries.length === 0) {
-      return `<tr><td colspan="12" style="text-align:center; padding:20px; color:var(--text-muted)">No refuelling records found.</td></tr>`;
+      return `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted)">No refuelling records found.</td></tr>`;
     }
 
     return entries.map(item => {
-      const st = item.status || { overallStatus: 'complete' };
-      let chipClass = 'chip-complete';
-      let chipLabel = 'Complete';
-
-      if (st.overallStatus === 'needs_review') {
-        chipClass = 'chip-review';
-        chipLabel = 'Needs Review';
-      } else if (st.overallStatus === 'incomplete') {
-        chipClass = 'chip-incomplete';
-        chipLabel = 'Incomplete';
-      }
-
       const dateStr = item.date ? item.date.split('T')[0] : 'N/A';
-      const accuStr = item.accuracyPercentage ? `${item.accuracyPercentage}%` : '-';
-      const costKm = item.costPerKm ? `${item.costPerKm}` : '-';
-      const station = item.stationName ? `${item.stationName} (${item.pumpNumber || 'N/A'})` : 'Station N/A';
+      const station = item.stationName ? item.stationName : 'Petrol Station';
+      const pump = item.pumpNumber ? ` (${item.pumpNumber})` : '';
+      const kml = item.calculatedKml ? `${item.calculatedKml} KM/L` : '-';
+      const trip = item.tripKm ? `${item.tripKm} KM` : '';
 
       return `
         <tr style="cursor:pointer;" onclick="App.openEntryDetailModal('${item.id}')">
-          <td><b>${dateStr}</b></td>
-          <td>${item.litres} L</td>
-          <td>${item.pricePerLitre}</td>
-          <td><b>${formatNumber(item.totalCost)}</b></td>
-          <td>${item.tripKm} km</td>
-          <td><b style="color:#38BDF8">${item.calculatedKml || '-'}</b></td>
-          <td>${item.clusterKml || '-'}</td>
-          <td><span style="color:${parseFloat(item.accuracyPercentage) >= 95 ? '#34D399' : '#FBBF24'}">${accuStr}</span></td>
-          <td>Ksh ${costKm}</td>
-          <td><small>${station}</small></td>
-          <td><span class="chip ${chipClass}">${chipLabel}</span></td>
-          <td><button class="btn-secondary" style="padding:2px 8px; font-size:10px;">Inspect</button></td>
+          <td>
+            <b style="color:#F8FAFC;">${dateStr}</b><br/>
+            <small style="color:var(--text-muted); font-size:11px;">${station}${pump}</small>
+          </td>
+          <td>
+            <b style="color:#F8FAFC;">${item.litres} L</b><br/>
+            <small style="color:var(--text-muted); font-size:11px;">@ Ksh ${item.pricePerLitre}/L</small>
+          </td>
+          <td>
+            <b style="color:#38BDF8; font-size:13.5px;">Ksh ${formatNumber(item.totalCost)}</b>
+          </td>
+          <td>
+            <b style="color:#34D399; font-size:13.5px;">${kml}</b><br/>
+            <small style="color:var(--text-muted); font-size:11px;">${trip}</small>
+          </td>
+          <td style="text-align:right;">
+            <button class="btn-arrow-detail" onclick="event.stopPropagation(); App.openEntryDetailModal('${item.id}')" title="View Full Details">
+              <span class="detail-text">Details</span>
+              <span class="detail-arrow">➔</span>
+            </button>
+          </td>
         </tr>
       `;
     }).join('');
@@ -609,29 +595,32 @@ const App = (function() {
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Odometer</th>
-                <th>Service Type</th>
-                <th>Category</th>
-                <th>Garage / Mechanic</th>
-                <th>Parts Cost</th>
-                <th>Labour Cost</th>
-                <th>Total Cost</th>
-                <th>Notes</th>
+                <th style="width:28%;">Date & Mileage</th>
+                <th style="width:30%;">Service & Garage</th>
+                <th style="width:22%;">Total Cost</th>
+                <th style="width:20%; text-align:right;">Details</th>
               </tr>
             </thead>
             <tbody>
-              ${state.services.map(s => `
-                <tr>
-                  <td><b>${s.serviceDate}</b></td>
-                  <td>${formatNumber(s.odometerReading)} km</td>
-                  <td><b>${s.serviceType}</b></td>
-                  <td><span class="chip chip-complete">${s.category}</span></td>
-                  <td>${s.garage || 'N/A'}</td>
-                  <td>Ksh ${formatNumber(s.partsCost)}</td>
-                  <td>Ksh ${formatNumber(s.labourCost)}</td>
-                  <td><b style="color:#38BDF8">Ksh ${formatNumber(s.totalCost)}</b></td>
-                  <td><small>${s.partsReplaced || s.notes || '-'}</small></td>
+              ${state.services.length === 0 ? `
+                <tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted)">No service logs recorded.</td></tr>
+              ` : state.services.map(s => `
+                <tr style="cursor:pointer;" onclick="App.showServiceDetails('${s.id}')">
+                  <td>
+                    <b style="color:#F8FAFC;">${s.serviceDate}</b><br/>
+                    <small style="color:var(--text-muted); font-size:11px;">${formatNumber(s.odometerReading)} KM</small>
+                  </td>
+                  <td>
+                    <b style="color:#F8FAFC;">${s.serviceType}</b><br/>
+                    <small style="color:var(--text-muted); font-size:11px;">${s.garage || 'Workshop N/A'} (${s.category})</small>
+                  </td>
+                  <td><b style="color:#38BDF8; font-size:13.5px;">Ksh ${formatNumber(s.totalCost)}</b></td>
+                  <td style="text-align:right;">
+                    <button class="btn-arrow-detail" onclick="event.stopPropagation(); App.showServiceDetails('${s.id}')">
+                      <span class="detail-text">Details</span>
+                      <span class="detail-arrow">➔</span>
+                    </button>
+                  </td>
                 </tr>
               `).join('')}
             </tbody>
@@ -2002,10 +1991,15 @@ const App = (function() {
     const modal = document.getElementById('modalOnboarding');
     const step1 = document.getElementById('onboardStep1');
     const step2 = document.getElementById('onboardStep2');
+    const cancelBtn = document.getElementById('btnCancelOnboarding');
     if (!modal) return;
 
     if (step1) step1.style.display = 'block';
     if (step2) step2.style.display = 'none';
+
+    if (cancelBtn) {
+      cancelBtn.style.display = (state.vehicles.length > 0) ? 'block' : 'none';
+    }
 
     AppDB.getAll('owner').then(owners => {
       const owner = owners && owners[0];
@@ -2017,6 +2011,12 @@ const App = (function() {
     });
 
     openModal(modal);
+  }
+
+  function showServiceDetails(serviceId) {
+    const s = state.services.find(x => x.id === serviceId);
+    if (!s) return;
+    alert(`🔧 Service Details\n--------------------------------\n• Date: ${s.serviceDate}\n• Odometer: ${formatNumber(s.odometerReading)} KM\n• Type: ${s.serviceType}\n• Category: ${s.category}\n• Garage: ${s.garage || 'N/A'}\n• Work / Parts: ${s.partsReplaced || 'N/A'}\n• Spares Cost: Ksh ${formatNumber(s.partsCost)}\n• Labour Cost: Ksh ${formatNumber(s.labourCost)}\n• Total Cost: Ksh ${formatNumber(s.totalCost)}\n• Notes: ${s.notes || 'None'}`);
   }
 
   function setupOnboarding() {
@@ -2237,6 +2237,7 @@ const App = (function() {
     switchVehicle,
     openRefuelModal,
     openEntryDetailModal,
+    showServiceDetails,
     openAIScanModal,
     openServiceModal,
     openExpenseModal,

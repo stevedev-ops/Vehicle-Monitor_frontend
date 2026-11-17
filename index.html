@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Vehicle Monitor & Fuel Intelligence</title>
-  <link rel="manifest" href="/static/manifest.json">
   <meta name="theme-color" content="#0284C7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/app.css">
   <link rel="stylesheet" href="/static/css/app.css">
 </head>
 <body>
@@ -154,9 +160,14 @@
               <label class="form-label">Email Address (Optional)</label>
               <input type="email" class="form-input" id="onboardOwnerEmail" placeholder="e.g. steve@example.com">
             </div>
-            <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:10px; font-size:14px;">
-              Next: Add Your Car ➔
-            </button>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+              <button type="button" class="btn-secondary" data-close-modal id="btnCancelOnboarding" style="display:none; flex:1; justify-content:center; padding:10px; font-size:14px;">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:10px; font-size:14px;">
+                Next: Add Your Car ➔
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -379,9 +390,14 @@
             ⚠️ Anomaly detected: Total cost does not match Litres × Price/L.
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center; padding:12px;">
-            Save Refuelling Entry
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Save Refuelling Entry
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -450,9 +466,14 @@
           <textarea class="form-textarea" id="smsInputText" rows="3" placeholder="e.g. Confirmed. Ksh6,140.00 sent to RUBIS WESTLANDS on 15/11/26 at 8:30 AM..."></textarea>
         </div>
 
-        <button class="btn-ai" id="btnParseSMS" style="width:100%; justify-content:center;">
-          ⚡ Parse SMS & Fill Form
-        </button>
+        <div style="display:flex; gap:10px; margin-top:14px;">
+          <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:10px;">
+            Cancel
+          </button>
+          <button class="btn-ai" id="btnParseSMS" style="flex:2; justify-content:center; padding:10px;">
+            ⚡ Parse SMS & Fill Form
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -526,9 +547,14 @@
             <input type="text" class="form-input" id="srvNotes" placeholder="Additional observations">
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
-            Save Service Record
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Save Service Record
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -571,9 +597,14 @@
             <input type="text" class="form-input" id="expNotes" placeholder="e.g. Expressway Westlands to JKIA">
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
-            Save Expense
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Save Expense
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -638,9 +669,14 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-primary" id="btnSubmitVehicle" style="width:100%; justify-content:center;">
-            Register Vehicle & Set Active
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" id="btnSubmitVehicle" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Register Vehicle & Set Active
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -702,9 +738,14 @@
             <input type="text" class="form-input" id="docNotes" placeholder="e.g. Comprehensive coverage with excess protector">
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
-            Save Document Record
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Save Document Record
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -757,9 +798,14 @@
             </div>
           </div>
 
-          <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">
-            Set Service Reminder
-          </button>
+          <div style="display:flex; gap:10px; margin-top:14px;">
+            <button type="button" class="btn-secondary" data-close-modal style="flex:1; justify-content:center; padding:12px; font-size:13px;">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary" style="flex:2; justify-content:center; padding:12px; font-size:13px;">
+              Set Service Reminder
+            </button>
+          </div>
         </form>
       </div>
     </div>

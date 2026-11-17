@@ -1,24 +1,28 @@
-const CACHE_NAME = 'vehicle-monitor-v6';
+const CACHE_NAME = 'vehicle-monitor-v7';
 const ASSETS_TO_CACHE = [
   '/',
+  '/index.html',
+  '/manifest.json',
   '/css/app.css',
+  '/js/app.js',
   '/js/db.js',
   '/js/ai_engine.js',
   '/js/seed_data.js',
-  '/js/app.js',
-  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/maskable-512.png',
+  '/static/manifest.json',
   '/static/css/app.css',
+  '/static/js/app.js',
   '/static/js/db.js',
   '/static/js/ai_engine.js',
-  '/static/js/seed_data.js',
-  '/static/js/app.js',
-  '/static/manifest.json'
+  '/static/js/seed_data.js'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Caching app assets');
+      console.log('[ServiceWorker] Caching app assets for 100% offline operation');
       return cache.addAll(ASSETS_TO_CACHE).catch(err => console.log('Cache addAll error:', err));
     })
   );
@@ -42,26 +46,36 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Offline-first strategy for static assets, network-first for /api/
-  if (event.request.url.includes('/api/')) {
+  // 1. Navigation requests (Opening the app completely offline)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({ offline: true, message: 'Device is offline' }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
+      caches.match('/', { ignoreSearch: true })
+        .then((cached) => cached || caches.match('/index.html', { ignoreSearch: true }))
+        .then((cached) => cached || fetch(event.request))
+        .catch(() => caches.match('/', { ignoreSearch: true }))
     );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((fetchRes) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, fetchRes.clone());
-            return fetchRes;
-          });
-        });
-      }).catch(() => caches.match('/'))
-    );
+    return;
   }
+
+  // 2. Cache-First strategy for static assets
+  event.respondWith(
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((fetchRes) => {
+        if (fetchRes && fetchRes.status === 200 && event.request.method === 'GET') {
+          const clone = fetchRes.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return fetchRes;
+      }).catch(() => {
+        if (event.request.destination === 'image') {
+          return caches.match('/icons/icon-192.png');
+        }
+        return caches.match('/', { ignoreSearch: true });
+      });
+    })
+  );
 });
 
